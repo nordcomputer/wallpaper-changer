@@ -12,8 +12,16 @@ CONFIG_DIR="$XDG_CONFIG_HOME/multiwall"
 CONFIG_FILE="$CONFIG_DIR/multiwall.conf"
 OUT_DIR_DEFAULT="$XDG_DATA_HOME/multiwall"
 
+# Default-Bilderordner (lokalisierungssicher)
+if command -v xdg-user-dir >/dev/null 2>&1; then
+  _PICTURES_DIR="$(xdg-user-dir PICTURES 2>/dev/null || true)"
+  [[ -n "${_PICTURES_DIR:-}" ]] || _PICTURES_DIR="$HOME/Pictures"
+else
+  _PICTURES_DIR="$HOME/Pictures"
+fi
+
 # --- Defaults (per Config überschreibbar) ---
-WALL_DIR="$(xdg-user-dir PICTURES)/"
+WALL_DIR="$_PICTURES_DIR"
 OUT_DIR="$OUT_DIR_DEFAULT"
 BASENAME="background-combined"
 JPEG_QUALITY=100
@@ -25,14 +33,13 @@ INTERVAL_SEC=""
 # Optionaler Align-Fallback, falls keine Y-Positionen verfügbar sind
 VERT_ALIGN="bottom"
 
-# ---- Pfad-Expansion für $HOME und ~ ----
+# ---- Pfad-Expansion für ~ ----
 expand_path() {
   local p="${1:-}"
   [[ -z "$p" ]] && { printf '%s' ""; return 0; }
   [[ "$p" == "~"* ]] && p="${p/#\~/$HOME}"
   printf '%s' "$p"
 }
-
 
 # --- Config laden ---
 load_config() {
@@ -63,6 +70,28 @@ if [[ -n "${INTERVAL_SEC:-}" && "${INTERVAL_SEC:-0}" -gt 0 ]]; then
 else
   SLEEP_SEC="$(( INTERVAL_MIN * 60 ))"
 fi
+
+# =======================
+# Argument-Parsing
+# =======================
+ONCE=0
+for arg in "${@:-}"; do
+  case "$arg" in
+    --once) ONCE=1 ;;
+    -h|--help)
+      cat <<EOF
+Usage: $(basename "$0") [--once]
+
+  --once   Einmal Hintergrund generieren/setzen und sofort beenden.
+EOF
+      exit 0
+      ;;
+    *)
+      echo "Unbekannte Option: $arg" >&2
+      exit 1
+      ;;
+  esac
+done
 
 # =======================
 # Checks & Verzeichnisse
@@ -324,6 +353,12 @@ fi
 # Initial generieren
 mapfile -t PICKS < <(pick_images)
 compose_wall "${PICKS[@]}"
+
+# Einmal-Modus?
+if (( ONCE )); then
+  echo "✅ Wallpaper einmal gesetzt. Beende."
+  exit 0
+fi
 
 # =======================
 # Loop (Config live nachladen möglich)
