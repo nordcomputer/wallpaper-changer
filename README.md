@@ -31,13 +31,13 @@ Voraussetzungen:
 Einfacher Einzeiler (immer neueste Version):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<OWNER>/<REPO>/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/nordcomputer/wallpaper-changer/main/install.sh | bash
 ```
 
 Oder mit **Release-Tag** (empfohlen):
 
 ```bash
-REF="v1.0.0" curl -fsSL https://raw.githubusercontent.com/<OWNER>/<REPO>/main/install.sh | bash
+REF="v1.0.0" curl -fsSL https://raw.githubusercontent.com/nordcomputer/wallpaper-changer/main/install.sh | bash
 ```
 
 Die Installation legt an:
