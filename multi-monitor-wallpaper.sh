@@ -161,7 +161,10 @@ logical_monitors = state[2]
 
 out = []
 for lm in logical_monitors:
-    x = lm[1]; y = lm[2]; scale = lm[3]
+    # tuple: (serial, x, y, scale, transform, primary, monitors, props)
+    x = int(round(float(lm[1])))
+    y = int(round(float(lm[2])))
+    scale = lm[3]
     props = lm[-1] if isinstance(lm[-1], dict) else {}
     lw = props.get('logical-width')
     lh = props.get('logical-height')
