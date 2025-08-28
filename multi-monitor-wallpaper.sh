@@ -75,7 +75,7 @@ fi
 # Argument-Parsing
 # =======================
 ONCE=0
-for arg in "${@:-}"; do
+for arg in "$@"; do   # <— kein ${@:-} verwenden
   case "$arg" in
     --once) ONCE=1 ;;
     -h|--help)

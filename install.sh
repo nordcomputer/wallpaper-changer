@@ -120,7 +120,7 @@ else
 # ~/.config/multiwall/multiwall.conf
 
 # Ordner mit den Quellbildern (nutze ~ für HOME)
-WALL_DIR="${PICTURES_DIR}/wallpaper"
+WALL_DIR="${PICTURES_DIR}"
 
 # Ausgabeordner (Standard ist ~/.local/share/multiwall)
 OUT_DIR="~/.local/share/multiwall"
