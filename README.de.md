@@ -124,6 +124,7 @@ install.sh
 uninstall.sh
 multi-monitor-wallpaper.sh
 README.md
+README.de.md
 ```
 
 Änderungen am Skript können direkt getestet werden:

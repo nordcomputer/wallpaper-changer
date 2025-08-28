@@ -125,7 +125,6 @@ uninstall.sh
 multi-monitor-wallpaper.sh
 README.md
 README.de.md
-README.en.md
 ```
 
 Test script directly:
