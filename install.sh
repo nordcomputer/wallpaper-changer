@@ -133,7 +133,7 @@ INTERVAL_MIN=5
 SHUFFLE=1
 
 # JPEG-Qualität (1-100)
-JPEG_QUALITY=92
+JPEG_QUALITY=100
 
 # Vertikale Fallback-Ausrichtung: top|center|bottom
 VERT_ALIGN="bottom"
