@@ -1,111 +1,113 @@
 # 🖼️ Multi-Monitor Wallpaper Changer for GNOME
 
-Ein kleines Bash-Skript, das automatisch **verschiedene Bilder für mehrere Monitore** zu einem großen Bild kombiniert und es als **spanned Wallpaper** in GNOME setzt (unter Xorg und Wayland).
-Es liest die Monitor-Auflösungen aus, passt die Bilder an und wechselt sie in regelmäßigen Intervallen.
+[🇩🇪 Deutsch](README.de.md) | [🇬🇧 English](README.md)
+
+A small Bash script that automatically combines **different images for multiple monitors** into one large picture and sets it as a **spanned wallpaper** in GNOME (works on both Xorg and Wayland).
+It detects monitor resolutions, adjusts the images accordingly, and changes them at regular intervals.
 
 ---
 
 ## ✨ Features
 
-- Automatische Erkennung der Monitore (Xorg via `xrandr`, Wayland via DBus)
-- Kombiniert pro Monitor ein eigenes Bild → zu einem **breiten Panorama**
-- Unterstützt beliebige Formate (`jpg`, `jpeg`, `png`, `webp`)
-- Zufällige oder sequentielle Bildauswahl
-- Konfigurierbares Intervall (Sekunden oder Minuten)
-- Fallback-Ausrichtung (oben / mittig / unten), wenn Höhen nicht passen
-- Lauffähig als **systemd-Userdienst** – startet automatisch mit deiner Session
-- Konfigurationsdatei unter `~/.config/multiwall/multiwall.conf`
+- Automatic monitor detection (Xorg via `xrandr`, Wayland via DBus)
+- Combines one image per monitor → into a **wide panorama**
+- Supports common formats (`jpg`, `jpeg`, `png`, `webp`)
+- Randomized or sequential image selection
+- Configurable interval (seconds or minutes)
+- Fallback vertical alignment (top / center / bottom) if heights don’t match
+- Runs as a **systemd user service** – starts automatically with your GNOME session
+- Configuration file located at `~/.config/multiwall/multiwall.conf`
 
 ---
 
 ## 🚀 Installation
 
-Voraussetzungen:
+Requirements:
 
-- Linux mit GNOME (Xorg oder Wayland)
-- [`ImageMagick`](https://imagemagick.org) (für `convert`)
-- `gsettings` (kommt mit GNOME)
+- Linux with GNOME (Xorg or Wayland)
+- [`ImageMagick`](https://imagemagick.org) (for `convert`)
+- `gsettings` (comes with GNOME)
 - `xdg-user-dirs`
-- optional: `jq`, `python3-gi` (für Wayland-Erkennung)
+- optional: `jq`, `python3-gi` (for Wayland detection)
 
-Einfacher Einzeiler (immer neueste Version):
+Quick install (always latest version):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/nordcomputer/wallpaper-changer/main/install.sh | bash
 ```
 
-Oder mit **Release-Tag** (empfohlen):
+Or install a **specific release tag** (recommended):
 
 ```bash
 REF="v1.0.0" curl -fsSL https://raw.githubusercontent.com/nordcomputer/wallpaper-changer/main/install.sh | bash
 ```
 
-Die Installation legt an:
+The installer sets up:
 
 - Binary: `~/.local/bin/multi-monitor-wallpaper.sh`
 - Config: `~/.config/multiwall/multiwall.conf`
-- Datenordner: `~/.local/share/multiwall/`
-- systemd-Userdienst: `wallpaper-span.service`
+- Data folder: `~/.local/share/multiwall/`
+- systemd user service: `wallpaper-span.service`
 
-Der Dienst startet sofort und aktualisiert dein Wallpaper in Intervallen.
+The service starts immediately and refreshes your wallpaper at the chosen interval.
 
 ---
 
-## ⚙️ Konfiguration
+## ⚙️ Configuration
 
-Datei: `~/.config/multiwall/multiwall.conf`
+File: `~/.config/multiwall/multiwall.conf`
 
-Beispiel:
+Example:
 
 ```ini
-# Ordner mit Quellbildern (nutze ~ für HOME)
+# Source images folder (use ~ for HOME)
 WALL_DIR=~/Pictures/wallpaper
 
-# Ausgabeordner (Default ist ~/.local/share/multiwall)
+# Output folder (default: ~/.local/share/multiwall)
 OUT_DIR=~/.local/share/multiwall
 
-# Intervall: entweder Minuten ODER Sekunden (nur eines setzen)
+# Interval: set either minutes OR seconds (only one)
 INTERVAL_MIN=5
 # INTERVAL_SEC=0
 
-# Zufällige Auswahl? (1 = ja, 0 = nacheinander)
+# Randomize selection? (1 = yes, 0 = sequential)
 SHUFFLE=1
 
-# JPEG-Qualität (1–100)
+# JPEG quality (1–100)
 JPEG_QUALITY=92
 
-# Fallback-Ausrichtung: top|center|bottom
+# Vertical fallback alignment: top|center|bottom
 VERT_ALIGN=bottom
 
-# Ausgabedatei-Basisname
+# Output filename base
 BASENAME=background-combined
 ```
 
-🔄 Änderungen an der Config werden automatisch übernommen – kein Neustart nötig.
+🔄 Config changes are applied automatically – no restart needed.
 
 ---
 
-## 🖥️ Systemd-Integration
+## 🖥️ Systemd Integration
 
-Der Installer richtet einen Userdienst ein:
+The installer creates a user service:
 
 ```bash
-systemctl --user status wallpaper-span.service   # Status anzeigen
-systemctl --user restart wallpaper-span.service  # Neu starten
-journalctl --user -fu wallpaper-span.service     # Logs ansehen
+systemctl --user status wallpaper-span.service   # show status
+systemctl --user restart wallpaper-span.service  # restart service
+journalctl --user -fu wallpaper-span.service     # view logs
 ```
 
 ---
 
-## 🧹 Deinstallation
+## 🧹 Uninstallation
 
-Binary + Dienst entfernen (Config & Daten bleiben):
+Remove binary and service (config & data remain):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/nordcomputer/wallpaper-changer/main/uninstall.sh | bash
 ```
 
-Vollständiges Aufräumen inkl. Config & generierten Bildern:
+Full cleanup including config & generated images:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/nordcomputer/wallpaper-changer/main/uninstall.sh | bash -s -- --purge
@@ -113,18 +115,20 @@ curl -fsSL https://raw.githubusercontent.com/nordcomputer/wallpaper-changer/main
 
 ---
 
-## 🛠️ Entwicklung
+## 🛠️ Development
 
-Repo-Struktur:
+Repo structure:
 
 ```
 install.sh
 uninstall.sh
 multi-monitor-wallpaper.sh
 README.md
+README.de.md
+README.en.md
 ```
 
-Änderungen am Skript können direkt getestet werden:
+Test script directly:
 
 ```bash
 ~/.local/bin/multi-monitor-wallpaper.sh --once
@@ -134,6 +138,6 @@ README.md
 
 ## ❤️ Credits
 
-- [ImageMagick](https://imagemagick.org) für die Bildbearbeitung
-- GNOME & [xdg-user-dirs](https://www.freedesktop.org/wiki/Software/xdg-user-dirs/) für Verzeichnis-Standards
-- inspiriert durch verschiedene Snippets aus Reddit/Linux-Foren
+- [ImageMagick](https://imagemagick.org) for image processing
+- GNOME & [xdg-user-dirs](https://www.freedesktop.org/wiki/Software/xdg-user-dirs/) for XDG directory standards
+- Inspired by various snippets from Reddit/Linux forums

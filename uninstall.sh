@@ -24,12 +24,12 @@ Uninstall Multiwall (User-Installation)
 
 Usage: $(basename "$0") [--purge] [--quiet]
 
-  --purge   Löscht zusätzlich Config und generierte Bilder:
+  --purge   deletes config and generated images:
             - ${CONF_DIR}
             - ${DATA_DIR}
-  --quiet   Weniger Ausgabe
+  --quiet   less output
 
-Ohne --purge bleiben Config & Daten erhalten.
+Without --purge Config and data will be kept.
 EOF
 }
 
@@ -42,7 +42,7 @@ while [[ $# -gt 0 ]]; do
     --purge) PURGE=1; shift ;;
     --quiet) QUIET=1; shift ;;
     -h|--help) usage; exit 0 ;;
-    *) err "Unbekannte Option: $1"; usage; exit 1 ;;
+    *) err "Unknown option: $1"; usage; exit 1 ;;
   esac
 done
 
@@ -59,16 +59,16 @@ if have systemctl; then
   # Unit-Datei entfernen
   if [[ -f "$SERVICE" ]]; then
     rm -f "$SERVICE"
-    log "🧹 Entfernt: $SERVICE"
+    log "🧹 Removed: $SERVICE"
   else
-    log "ℹ️  Service-Datei nicht gefunden (ok): $SERVICE"
+    log "ℹ️  Service file not found (ok): $SERVICE"
   fi
   # Reload der User-Units
   systemctl --user daemon-reload || true
 else
-  warn "systemctl nicht verfügbar – überspringe Dienst-Stop/Disable."
+  warn "systemctl not available – skipping service Stop/Disable."
   # Falls die Datei existiert, trotzdem löschen
-  [[ -f "$SERVICE" ]] && { rm -f "$SERVICE"; log "🧹 Entfernt: $SERVICE"; }
+  [[ -f "$SERVICE" ]] && { rm -f "$SERVICE"; log "🧹 Removed: $SERVICE"; }
 fi
 
 # ========================
@@ -76,9 +76,9 @@ fi
 # ========================
 if [[ -f "$BIN" ]]; then
   rm -f "$BIN"
-  log "🧹 Entfernt: $BIN"
+  log "🧹 Removed: $BIN"
 else
-  log "ℹ️  Binary nicht gefunden (ok): $BIN"
+  log "ℹ️  Binary not found (ok): $BIN"
 fi
 
 # Alternative Kopie (von install.sh angelegt) entfernen
@@ -86,11 +86,11 @@ if [[ -f "$SELF_ALT" ]]; then
   # nicht sich selbst löschen, falls gerade von dort gestartet
   if [[ "$(readlink -f "$0")" != "$(readlink -f "$SELF_ALT")" ]]; then
     rm -f "$SELF_ALT"
-    log "🧹 Entfernt: $SELF_ALT"
+    log "🧹 Removed: $SELF_ALT"
   else
     # Nach dem Exit löschen
     trap 'rm -f "$SELF_ALT" >/dev/null 2>&1 || true' EXIT
-    log "🧹 Entferne nach Script-Ende: $SELF_ALT"
+    log "🧹 Removing script after ending: $SELF_ALT"
   fi
 fi
 
@@ -102,18 +102,18 @@ if (( PURGE )); then
     rm -rf "$CONF_DIR"
     log "🧹 Entfernt (Config): $CONF_DIR"
   else
-    log "ℹ️  Config-Ordner nicht gefunden (ok): $CONF_DIR"
+    log "ℹ️  Config directory not found (ok): $CONF_DIR"
   fi
   if [[ -d "$DATA_DIR" ]]; then
     rm -rf "$DATA_DIR"
-    log "🧹 Entfernt (Daten): $DATA_DIR"
+    log "🧹 Removed (Data): $DATA_DIR"
   else
-    log "ℹ️  Daten-Ordner nicht gefunden (ok): $DATA_DIR"
+    log "ℹ️  Data directory not found (ok): $DATA_DIR"
   fi
 else
-  log "ℹ️  Config & Daten beibehalten. Mit --purge würdest du löschen:"
+  log "ℹ️  Config and data remain in place. With --purge you would delete them:"
   log "    - $CONF_DIR"
   log "    - $DATA_DIR"
 fi
 
-log "✅ Uninstall abgeschlossen."
+log "✅ Uninstall finished."

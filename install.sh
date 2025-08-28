@@ -64,7 +64,7 @@ resolve_ref() {
 raw_url() { echo "https://raw.githubusercontent.com/${REPO}/${1}/${2}"; }
 
 ensure_systemd_user() {
-  have systemctl || die "systemctl fehlt. systemd-Userdienste sind erforderlich."
+  have systemctl || die "systemctl missing. systemd-user services are necessary."
 }
 
 xdg_pictures_dir() {
@@ -79,11 +79,11 @@ xdg_pictures_dir() {
 # ========================
 # Vorprüfungen
 # ========================
-[[ "$REPO" != "USER/REPO" ]] || die "Bitte REPO_DEFAULT in install.sh anpassen ODER REPO=owner/repo beim Aufruf setzen."
+[[ "$REPO" != "USER/REPO" ]] || die "Please set REPO_DEFAULT in install.sh or set REPO=owner/repo when starting."
 ensure_systemd_user
 
 REF_RESOLVED="$(resolve_ref)"
-echo "📦 Quelle: ${REPO} @ ${REF_RESOLVED}"
+echo "📦 Source: ${REPO} @ ${REF_RESOLVED}"
 
 TMPDIR="$(mktemp -d)"
 trap 'rm -rf "$TMPDIR"' EXIT
@@ -91,7 +91,7 @@ trap 'rm -rf "$TMPDIR"' EXIT
 # ========================
 # Dateien aus Repo holen
 # ========================
-echo "⬇️  Lade Skripte…"
+echo "⬇️  Loading scripts…"
 fetch "$(raw_url "$REF_RESOLVED" "multi-monitor-wallpaper.sh")" "$TMPDIR/multi-monitor-wallpaper.sh"
 fetch "$(raw_url "$REF_RESOLVED" "uninstall.sh")"              "$TMPDIR/uninstall.sh"
 
@@ -105,43 +105,43 @@ mkdir -p "$BIN_DIR" "$DATA_DIR" "$CONF_DIR" "$SYSTEMD_USER_DIR"
 install -m 0755 "$TMPDIR/multi-monitor-wallpaper.sh" "$BIN_TARGET"
 install -m 0755 "$TMPDIR/uninstall.sh"               "$HOME/.local/bin/uninstall-multiwall.sh"
 
-echo "✅ Installiert: $BIN_TARGET"
-echo "✅ Installiert: $HOME/.local/bin/uninstall-multiwall.sh"
-echo "✅ Datenordner: $DATA_DIR"
+echo "✅ Installed: $BIN_TARGET"
+echo "✅ Installed: $HOME/.local/bin/uninstall-multiwall.sh"
+echo "✅ Data directory: $DATA_DIR"
 
 # ========================
 # Beispiel-Config schreiben (falls nicht vorhanden)
 # ========================
 if [[ -f "$CONF_FILE" ]]; then
-  echo "ℹ️  Config existiert bereits: $CONF_FILE (unverändert)."
+  echo "ℹ️  Config already exists: $CONF_FILE (unchanged)."
 else
   PICTURES_DIR="$(xdg_pictures_dir)"
   cat > "$CONF_FILE" <<EOF
 # ~/.config/multiwall/multiwall.conf
 
-# Ordner mit den Quellbildern (nutze ~ für HOME)
+# Directory for source images (use ~ for HOME)
 WALL_DIR="${PICTURES_DIR}"
 
-# Ausgabeordner (Standard ist ~/.local/share/multiwall)
+# Output directory (default is ~/.local/share/multiwall)
 OUT_DIR="~/.local/share/multiwall"
 
-# Intervall: entweder Minuten ODER Sekunden (nur EINES setzen)
+# Intervall: either minutes OR seconds (only set one)
 INTERVAL_MIN=5
 # INTERVAL_SEC=0
 
-# Zufällige Auswahl? 1=yes, 0=no
+# Shuffle? 1=yes, 0=no
 SHUFFLE=1
 
-# JPEG-Qualität (1-100)
+# JPEG-Quality (1-100)
 JPEG_QUALITY=100
 
-# Vertikale Fallback-Ausrichtung: top|center|bottom
+# Vertical alignment: top|center|bottom
 VERT_ALIGN="bottom"
 
-# Ausgabedatei-Basisname
+# Output file basename
 BASENAME="background-combined"
 EOF
-  echo "✅ Beispiel-Config erstellt: $CONF_FILE"
+  echo "✅ Created example config: $CONF_FILE"
 fi
 
 # ========================
@@ -156,7 +156,7 @@ PartOf=graphical-session.target
 
 [Service]
 Type=simple
-# Session-DBus/Env für gsettings bereitstellen:
+# provide Session-DBus/Env für gsettings:
 ExecStartPre=/usr/bin/dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE DBUS_SESSION_BUS_ADDRESS
 ExecStart=%h/.local/bin/multi-monitor-wallpaper.sh
 Restart=always
@@ -166,22 +166,22 @@ RestartSec=5
 WantedBy=graphical-session.target
 EOF
 
-echo "✅ systemd-Userdienst geschrieben: $SERVICE_FILE"
+echo "✅ systemd-user service created: $SERVICE_FILE"
 
 # ========================
-# Dienst aktivieren/ starten
+# Activate and start service
 # ========================
 systemctl --user daemon-reload
 systemctl --user enable --now wallpaper-span.service
 
 echo
-echo "🎉 Installation fertig!"
+echo "🎉 Installation complete!"
 echo "• Script:     $BIN_TARGET"
 echo "• Config:     $CONF_FILE"
 echo "• Output dir: $DATA_DIR"
 echo "• Service:    wallpaper-span.service"
 echo
-echo "Nützlich:"
+echo "Useful commands:"
 echo "  systemctl --user status wallpaper-span.service"
 echo "  journalctl --user -fu wallpaper-span.service"
 echo "  systemctl --user restart wallpaper-span.service"
