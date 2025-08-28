@@ -4,7 +4,7 @@ set -euo pipefail
 # ========================
 # Einstellungen
 # ========================
-REPO_DEFAULT="USER/REPO"     # <--- HIER anpassen oder beim Aufruf REPO=... setzen
+REPO_DEFAULT="nordcomputer/wallpaper-changer"     # <--- HIER anpassen oder beim Aufruf REPO=... setzen
 REPO="${REPO:-$REPO_DEFAULT}"
 
 # Optional: konkreten Ref/Tag/Branch vorgeben (z.B. REF=v1.0.0). Sonst: latest → main
