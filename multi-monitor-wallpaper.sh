@@ -115,18 +115,19 @@ detect_monitors() {
   unset MON_W MON_H MON_X MON_Y MONITORS
   declare -g -a MON_W MON_H MON_X MON_Y MONITORS
 
-  if [[ "${XDG_SESSION_TYPE:-}" == "x11" ]] && command -v xrandr >/dev/null 2>&1; then
+  # --- Helper: xrandr-Parser (nutzen wir als Fallback, auch unter Wayland) ---
+  parse_xrandr() {
     mapfile -t _rows < <(
-      xrandr --listmonitors | awk '
-        /^[ ]*[0-9]+:/ {
-          if (match($0, /([0-9]+)\/[0-9]+x([0-9]+)\/[0-9]+\+([0-9]+)\+([0-9]+)/, a)) {
-            printf "%d %d %d %d\n", a[3], a[4], a[1], a[2]  # X Y W H
+      xrandr | awk '
+        / connected/ {
+          if (match($0, /([0-9]+)x([0-9]+)\+([0-9]+)\+([0-9]+)/, a)) {
+            # X Y W H
+            printf "%d %d %d %d\n", a[3], a[4], a[1], a[2]
           }
         }
       ' | sort -n -k1,1 -k2,2
     )
     if ((${#_rows[@]}==0)); then
-      echo "xrandr lieferte keine Monitore." >&2
       return 1
     fi
     for r in "${_rows[@]}"; do
@@ -134,8 +135,25 @@ detect_monitors() {
       MON_X+=("$X"); MON_Y+=("$Y"); MON_W+=("$W"); MON_H+=("$H"); MONITORS+=("${W}x${H}")
     done
     return 0
-  fi
+  }
 
+  # --- Helper: Layout-Validierung ---
+  is_suspect_layout() {
+    # Verdächtig, wenn alle Monitore exakt gleiche WxH haben ODER W/H==0 vorkommt
+    local same=1
+    for i in "${!MON_W[@]}"; do
+      if (( MON_W[i]==0 || MON_H[i]==0 )); then
+        return 0
+      fi
+      if (( i>0 )) && { [[ "${MON_W[i]}" -ne "${MON_W[0]}" ]] || [[ "${MON_H[i]}" -ne "${MON_H[0]}" ]]; }; then
+        same=0
+      fi
+    done
+    (( same==1 )) && return 0
+    return 1
+  }
+
+  # --- 1) Wayland/DBus (Mutter) ---
   if [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]] && command -v python3 >/dev/null 2>&1; then
     local json
     json="$(python3 - <<'PY'
@@ -147,6 +165,8 @@ try:
 except Exception:
     print(json.dumps({"error":"python3-gi missing"}))
     raise SystemExit
+
+def is_num(x): return isinstance(x, (int, float))
 
 bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
 res = bus.call_sync(
@@ -161,26 +181,31 @@ logical_monitors = state[2]
 
 out = []
 for lm in logical_monitors:
-    # tuple: (serial, x, y, scale, transform, primary, monitors, props)
-    x = int(round(float(lm[1])))
-    y = int(round(float(lm[2])))
-    scale = lm[3]
+    scale = float(lm[3])
+    x = int(round(float(lm[1]) * scale))
+    y = int(round(float(lm[2]) * scale))
+
     props = lm[-1] if isinstance(lm[-1], dict) else {}
-    lw = props.get('logical-width')
-    lh = props.get('logical-height')
-    if isinstance(lw,int) and isinstance(lh,int):
-        w = int(round(lw*scale)); h = int(round(lh*scale))
+    lw = props.get('logical-width'); lh = props.get('logical-height')
+    # manche Versionen nutzen evtl. underscores
+    if not is_num(lw): lw = props.get('logical_width')
+    if not is_num(lh): lh = props.get('logical_height')
+
+    if is_num(lw) and is_num(lh):
+        w = int(round(float(lw) * scale))
+        h = int(round(float(lh) * scale))
     else:
+        # Fallback über current_mode(s)
         w = 0; h = 0
         for m in lm[6]:
             modes = m[4]; cur = m[5]
             try:
                 mw, mh = modes[cur][0], modes[cur][1]
-                w += mw
-                h = max(h, int(round(mh*scale)))
+                w += int(round(float(mw) * scale))
+                h  = max(h, int(round(float(mh) * scale)))
             except Exception:
                 pass
-        if w==0 or h==0:
+        if w<=0 or h<=0:
             w, h = 1920, 1080
     out.append({"x":x, "y":y, "w":w, "h":h})
 
@@ -190,31 +215,40 @@ PY
 )"
     if [[ "$json" == *"python3-gi missing"* ]]; then
       echo "Hinweis: Bitte 'python3-gi' installieren (Wayland-Erkennung)." >&2
-      return 1
+      # kein unmittelbarer Exit: wir versuchen xrandr
+    elif command -v jq >/dev/null 2>&1; then
+      local n; n="$(printf '%s' "$json" | jq 'length')" || n=0
+      if (( n > 0 )); then
+        for ((i=0; i<n; i++)); do
+          MON_X+=("$(printf '%s' "$json" | jq -r ".[$i].x | floor")")
+          MON_Y+=("$(printf '%s' "$json" | jq -r ".[$i].y | floor")")
+          MON_W+=("$(printf '%s' "$json" | jq -r ".[$i].w | floor")")
+          MON_H+=("$(printf '%s' "$json" | jq -r ".[$i].h | floor")")
+          MONITORS+=("$(printf '%s' "$json" | jq -r ".[$i].w | floor")x$(printf '%s' "$json" | jq -r ".[$i].h | floor")")
+        done
+        # Prüfen, ob das plausibel ist; wenn nicht → xrandr fallback
+        if is_suspect_layout && command -v xrandr >/dev/null 2>&1; then
+          unset MON_W MON_H MON_X MON_Y MONITORS
+          declare -g -a MON_W MON_H MON_X MON_Y MONITORS
+          if parse_xrandr; then return 0; else return 0; fi
+        fi
+        return 0
+      fi
     fi
-    if ! command -v jq >/dev/null 2>&1; then
-      echo "Hinweis: Bitte 'jq' installieren (Wayland-Erkennung)." >&2
-      return 1
-    fi
-    local n
-    n="$(printf '%s' "$json" | jq 'length')"
-    if (( n == 0 )); then
-      echo "Wayland/Mutter lieferte keine Monitore." >&2
-      return 1
-    fi
-    for ((i=0; i<n; i++)); do
-      MON_X+=("$(printf '%s' "$json" | jq -r ".[$i].x")")
-      MON_Y+=("$(printf '%s' "$json" | jq -r ".[$i].y")")
-      MON_W+=("$(printf '%s' "$json" | jq -r ".[$i].w")")
-      MON_H+=("$(printf '%s' "$json" | jq -r ".[$i].h")")
-      MONITORS+=("$(printf '%s' "$json" | jq -r ".[$i].w")x$(printf '%s' "$json" | jq -r ".[$i].h")")
-    done
-    return 0
+    # Wenn wir hier landen: Wayland-Pfad hat nichts Brauchbares geliefert → später xrandr versuchen
   fi
 
-  echo "Monitor-Erkennung: weder Xorg (xrandr) noch Wayland+python3-gi/jq verfügbar." >&2
+  # --- 2) xrandr (unter Xorg UND als Fallback unter Wayland/XWayland) ---
+  if command -v xrandr >/dev/null 2>&1; then
+    if parse_xrandr; then
+      return 0
+    fi
+  fi
+
+  echo "Monitor-Erkennung fehlgeschlagen." >&2
   return 1
 }
+
 
 # =======================
 # Bilderliste laden (robust, NUL-getrennt)
