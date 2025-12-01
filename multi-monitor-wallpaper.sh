@@ -358,7 +358,7 @@ compose_wall() {
   local target="$TARGET_A"
   if (( USE_A == 1 )); then target="$TARGET_A"; USE_A=0; else target="$TARGET_B"; USE_A=1; fi
 
-  magick "${segments[@]}" +append -interlace Line -sampling-factor 4:2:0 -quality "$JPEG_QUALITY" "$target"
+  magick "${segments[@]}" +append -interlace Line -sampling-factor 4:2:0 -depth 8 -quality "$JPEG_QUALITY" "$target"
 
   local uri="file://$target"
   gsettings set org.gnome.desktop.background picture-uri "$uri"
