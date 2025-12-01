@@ -97,7 +97,7 @@ done
 # Checks & Verzeichnisse
 # =======================
 
-command -v convert >/dev/null 2>&1 || { echo "Fehlt: ImageMagick (convert)"; exit 1; }
+command -v magick >/dev/null 2>&1 || { echo "Fehlt: ImageMagick (magick)"; exit 1; }
 command -v gsettings >/dev/null 2>&1 || { echo "Fehlt: gsettings"; exit 1; }
 
 mkdir -p "$OUT_DIR"
@@ -358,7 +358,7 @@ compose_wall() {
   local target="$TARGET_A"
   if (( USE_A == 1 )); then target="$TARGET_A"; USE_A=0; else target="$TARGET_B"; USE_A=1; fi
 
-  convert "${segments[@]}" +append -interlace Line -sampling-factor 4:2:0 -quality "$JPEG_QUALITY" "$target"
+  magick "${segments[@]}" +append -interlace Line -sampling-factor 4:2:0 -quality "$JPEG_QUALITY" "$target"
 
   local uri="file://$target"
   gsettings set org.gnome.desktop.background picture-uri "$uri"
