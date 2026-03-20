@@ -70,6 +70,9 @@ OUT_DIR=~/.local/share/multiwall
 INTERVAL_MIN=5
 # INTERVAL_SEC=0
 
+# Delay vor dem ersten Starten nach dem Booten
+DELAY_SECONDS=5
+
 # Zufällige Auswahl? (1 = ja, 0 = nacheinander)
 SHUFFLE=1
 
