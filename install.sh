@@ -129,6 +129,9 @@ OUT_DIR="~/.local/share/multiwall"
 INTERVAL_MIN=5
 # INTERVAL_SEC=0
 
+#Delay before first start
+DELAY_SECONDS=5
+
 # Shuffle? 1=yes, 0=no
 SHUFFLE=1
 

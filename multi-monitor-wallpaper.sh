@@ -26,6 +26,8 @@ OUT_DIR="$OUT_DIR_DEFAULT"
 BASENAME="background-combined"
 JPEG_QUALITY=100
 SHUFFLE=1
+DELAY_SECONDS=0
+
 # Intervall: entweder MINUTEN ODER SEKUNDEN setzen (Config darf eines von beiden befüllen)
 INTERVAL_MIN=5
 INTERVAL_SEC=""
@@ -44,7 +46,7 @@ expand_path() {
 # --- Config laden ---
 load_config() {
   [[ -f "$CONFIG_FILE" ]] || return 0
-  local allowed='^(WALL_DIR|OUT_DIR|BASENAME|JPEG_QUALITY|SHUFFLE|VERT_ALIGN|INTERVAL_MIN|INTERVAL_SEC)='
+  local allowed='^(WALL_DIR|OUT_DIR|BASENAME|JPEG_QUALITY|SHUFFLE|VERT_ALIGN|INTERVAL_MIN|INTERVAL_SEC|DELAY_SECONDS)='
   while IFS= read -r line; do
     [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
     [[ "$line" =~ $allowed ]] || continue
@@ -54,15 +56,19 @@ load_config() {
     val="${val%\"}"; val="${val#\"}"; val="${val%\'}"; val="${val#\'}"
     case "$key" in
       WALL_DIR|OUT_DIR|BASENAME|VERT_ALIGN) printf -v "$key" '%s' "$val" ;;
-      JPEG_QUALITY|SHUFFLE|INTERVAL_MIN|INTERVAL_SEC) printf -v "$key" '%s' "${val//[^0-9]/}" ;;
+      JPEG_QUALITY|SHUFFLE|INTERVAL_MIN|INTERVAL_SEC|DELAY_SECONDS) printf -v "$key" '%s' "${val//[^0-9]/}" ;;
     esac
   done < "$CONFIG_FILE"
 }
+
 
 load_config
 # Pfade nach dem Laden expandieren
 WALL_DIR="$(expand_path "$WALL_DIR")"
 OUT_DIR="$(expand_path "$OUT_DIR")"
+
+# sleep for DELAY_SECONDS seconds before first run
+sleep "$DELAY_SECONDS"
 
 # Intervall in Sekunden bestimmen
 if [[ -n "${INTERVAL_SEC:-}" && "${INTERVAL_SEC:-0}" -gt 0 ]]; then
